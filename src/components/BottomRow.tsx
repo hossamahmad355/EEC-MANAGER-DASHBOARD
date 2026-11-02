@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AlertTriangle,
   Building,
+  Calendar,
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
@@ -21,6 +22,7 @@ interface BottomRowProps {
   };
   onOpenNewProject: () => void;
   onOpenAllProjects: () => void;
+  onOpenGantt?: () => void;
   onOpenAllSites: () => void;
   onOpenAllTasks: () => void;
   onToggleSiteConnection: (id: string) => void;
@@ -32,6 +34,7 @@ export const BottomRow: React.FC<BottomRowProps> = ({
   tasksCounters,
   onOpenNewProject,
   onOpenAllProjects,
+  onOpenGantt,
   onOpenAllSites,
   onOpenAllTasks,
   onToggleSiteConnection,
@@ -257,12 +260,23 @@ export const BottomRow: React.FC<BottomRowProps> = ({
                 أهم المشاريع الجارية
               </h2>
             </div>
-            <button
-              onClick={onOpenAllProjects}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
-            >
-              عرض الكل
-            </button>
+            <div className="flex items-center gap-2">
+              {onOpenGantt && (
+                <button
+                  onClick={onOpenGantt}
+                  className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  <Calendar className="w-3 h-3 text-blue-600" />
+                  <span>مخطط جانت</span>
+                </button>
+              )}
+              <button
+                onClick={onOpenAllProjects}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                عرض الكل
+              </button>
+            </div>
           </div>
 
           {/* Table */}

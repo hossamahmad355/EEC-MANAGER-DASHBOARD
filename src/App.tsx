@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertsModal } from './components/AlertsModal';
 import { BottomRow } from './components/BottomRow';
 import { BudgetTrendChart } from './components/BudgetTrendChart';
+import { GanttScheduleModal } from './components/GanttScheduleModal';
 import { Header } from './components/Header';
 import { KpiBar } from './components/KpiBar';
 import { MiddleRow } from './components/MiddleRow';
@@ -23,6 +24,7 @@ import {
   fetchAlerts,
   fetchBudgetTrends,
   fetchDashboardData,
+  fetchGanttSchedule,
   fetchPerformanceReport,
   fetchProjects,
   fetchSites,
@@ -33,11 +35,14 @@ import {
   toggleServiceStatus,
   toggleTaskCompletion,
   updateProject,
+  updateProjectSchedule,
+  updateTaskStatus,
 } from './services/api';
 import {
   Alert,
   BudgetTrendData,
   DashboardData,
+  GanttScheduleData,
   PerformanceReport,
   Project,
   Site,
@@ -152,6 +157,8 @@ export default function App() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isTelemetryModalOpen, setIsTelemetryModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isGanttOpen, setIsGanttOpen] = useState(false);
+  const [ganttData, setGanttData] = useState<GanttScheduleData | null>(null);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState>(
     notificationService.getPermission()
@@ -169,18 +176,20 @@ export default function App() {
   // Load Initial Data
   const loadData = async () => {
     try {
-      const [dash, projs, sitesList, tasksList, trends] = await Promise.all([
+      const [dash, projs, sitesList, tasksList, trends, gantt] = await Promise.all([
         fetchDashboardData(),
         fetchProjects(),
         fetchSites(),
         fetchTasks(),
         fetchBudgetTrends().catch(() => initialBudgetTrends),
+        fetchGanttSchedule().catch(() => null),
       ]);
       setData(dash);
       setAllProjects(projs);
       setAllSites(sitesList);
       setAllTasks(tasksList);
       if (trends) setBudgetTrends(trends);
+      if (gantt) setGanttData(gantt);
     } catch (err) {
       console.warn('Backend loading warning, using client fallback:', err);
     } finally {
@@ -248,6 +257,34 @@ export default function App() {
       showToast(`تم تحديث نسبة تنفيذ "${updated.name}" إلى ${executionRate}%`);
     } catch (err: any) {
       showToast(err?.message || 'تعذر تحديث المشروع');
+    }
+  };
+
+  const handleUpdateSchedule = async (id: string, startDate?: string, endDate?: string) => {
+    try {
+      const res = await updateProjectSchedule(id, startDate, endDate);
+      setAllProjects((prev) => prev.map((p) => (p.id === id ? res.project : p)));
+      setData((prev) => ({
+        ...prev,
+        topProjects: prev.topProjects.map((p) => (p.id === id ? res.project : p)),
+      }));
+      setGanttData((prev) =>
+        prev
+          ? {
+              ...prev,
+              projects: prev.projects.map((p) => (p.id === id ? res.project : p)),
+              conflicts: res.conflicts,
+            }
+          : null
+      );
+      if (res.conflicts.length === 0) {
+        notificationService.sendNotification('✅ تم فض وحل تعارضات مواعيد التسليم بنجاح', {
+          body: 'كافة مواعيد تسليم المشاريع متناسقة الآن ولا توجد لجان استلام متزامنة.',
+        });
+      }
+      showToast(`تم تعديل موعد تسليم مشروع "${res.project.name}" إلى ${res.project.endDate}`);
+    } catch (err: any) {
+      showToast(err?.message || 'تعذر تحديث الجدول الزمني للمشروع');
     }
   };
 
@@ -346,6 +383,20 @@ export default function App() {
     }
   };
 
+  const handleUpdateTaskStatus = async (id: string, status: 'in_progress' | 'completed' | 'delayed') => {
+    try {
+      const updated = await updateTaskStatus(id, status);
+      setAllTasks((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      showToast(
+        `تم تحديث حالة المهمة إلى "${
+          status === 'completed' ? 'مكتملة' : status === 'in_progress' ? 'قيد التنفيذ' : 'مؤجلة'
+        }"`
+      );
+    } catch (err: any) {
+      showToast(err?.message || 'تعذر تعديل حالة المهمة');
+    }
+  };
+
   const handleRefreshTelemetry = async () => {
     try {
       const telemetry = await refreshTelemetry();
@@ -418,6 +469,8 @@ export default function App() {
           onOpenSearch={() => setIsSearchModalOpen(true)}
           onRefresh={handleRefresh}
           onOpenReport={handleOpenReport}
+          onOpenGantt={() => setIsGanttOpen(true)}
+          conflictsCount={ganttData?.conflicts?.length || 0}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
           notificationPermission={notificationPermission}
           isRefreshing={isRefreshing}
@@ -459,6 +512,7 @@ export default function App() {
           tasksCounters={data.tasksCounters}
           onOpenNewProject={() => setIsNewProjectOpen(true)}
           onOpenAllProjects={() => setIsProjectsModalOpen(true)}
+          onOpenGantt={() => setIsGanttOpen(true)}
           onOpenAllSites={() => setIsSitesModalOpen(true)}
           onOpenAllTasks={() => setIsTasksModalOpen(true)}
           onToggleSiteConnection={handleToggleSiteConnection}
@@ -505,6 +559,7 @@ export default function App() {
         onClose={() => setIsTasksModalOpen(false)}
         tasks={allTasks}
         onToggleTask={handleToggleTask}
+        onUpdateStatus={handleUpdateTaskStatus}
       />
 
       {/* Quick Search Modal */}
@@ -541,6 +596,15 @@ export default function App() {
         permission={notificationPermission}
         onPermissionChange={(perm) => setNotificationPermission(perm)}
         onTriggerSimulatedAlert={handleTriggerSimulatedAlert}
+      />
+
+      {/* Interactive Gantt Schedule & Handover Conflict Detection Modal */}
+      <GanttScheduleModal
+        isOpen={isGanttOpen}
+        onClose={() => setIsGanttOpen(false)}
+        scheduleData={ganttData}
+        onUpdateSchedule={handleUpdateSchedule}
+        onRefresh={loadData}
       />
     </div>
   );

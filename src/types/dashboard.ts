@@ -52,6 +52,7 @@ export interface TaskItem {
   assignedTo: string;
   dueDate: string;
   completed: boolean;
+  status?: 'in_progress' | 'completed' | 'delayed';
 }
 
 export interface DashboardData {
@@ -141,4 +142,25 @@ export interface BudgetTrendData {
   totalContracts: number;
   trends: MonthlyTrend[];
 }
+
+export interface ScheduleConflict {
+  id: string;
+  type: 'direct_handover_overlap' | 'delayed_risk';
+  severity: 'high' | 'medium';
+  projectIds: string[];
+  projectNames: string[];
+  title: string;
+  description: string;
+  handoverDates: string[];
+  suggestedAction: string;
+}
+
+export interface GanttScheduleData {
+  projects: Project[];
+  conflicts: ScheduleConflict[];
+  timelineStart: string;
+  timelineEnd: string;
+  currentDate: string;
+}
+
 

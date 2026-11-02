@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, BellRing, Calendar, FileText, RefreshCw, Search, ShieldCheck, User } from 'lucide-react';
+import { AlertTriangle, Bell, BellRing, Calendar, FileText, LayoutGrid, RefreshCw, Search, ShieldCheck, User } from 'lucide-react';
 import { Alert } from '../types/dashboard';
 import { NotificationPermissionState } from '../services/notifications';
 
@@ -9,6 +9,8 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onRefresh: () => void;
   onOpenReport: () => void;
+  onOpenGantt: () => void;
+  conflictsCount: number;
   onOpenNotificationSettings: () => void;
   notificationPermission: NotificationPermissionState;
   isRefreshing: boolean;
@@ -20,6 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onRefresh,
   onOpenReport,
+  onOpenGantt,
+  conflictsCount,
   onOpenNotificationSettings,
   notificationPermission,
   isRefreshing,
@@ -215,6 +219,22 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <FileText className="w-3.5 h-3.5" />
               <span>تحميل التقرير (PDF)</span>
+            </button>
+
+            {/* Gantt Schedule Button with Conflict Alert Badge */}
+            <button
+              onClick={onOpenGantt}
+              title="مخطط جانت الزمني وكشف تعارض مواعيد التسليم"
+              className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer border border-slate-700"
+            >
+              <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <span>مخطط جانت الزمني</span>
+              {conflictsCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full animate-pulse flex items-center gap-0.5">
+                  <AlertTriangle className="w-2.5 h-2.5 inline" />
+                  <span>{conflictsCount}</span>
+                </span>
+              )}
             </button>
           </div>
         </div>

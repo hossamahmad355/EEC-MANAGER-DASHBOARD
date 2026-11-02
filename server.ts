@@ -65,6 +65,7 @@ interface TaskItem {
   assignedTo: string;
   dueDate: string;
   completed: boolean;
+  status?: 'in_progress' | 'completed' | 'delayed';
 }
 
 // Initial Data
@@ -465,15 +466,18 @@ let alerts: Alert[] = [
 ];
 
 let tasks: TaskItem[] = [
-  { id: 't-1', category: 'approval', title: 'موافقة على مستخلص مقاول باطن - خرسانات', projectOrSite: 'مبنى إداري جديد', priority: 'high', assignedTo: 'المدير العام', dueDate: '2026-11-03', completed: false },
-  { id: 't-2', category: 'approval', title: 'اعتماد عينات رخام الواجهات الرئيسية', projectOrSite: 'تشطيب المقر الرئيسي', priority: 'medium', assignedTo: 'المدير الفني', dueDate: '2026-11-04', completed: false },
-  { id: 't-3', category: 'approval', title: 'طلب شراء كابلات شبكة Cat6A ومسارات', projectOrSite: 'مركز بيانات', priority: 'high', assignedTo: 'مدير الشبكة', dueDate: '2026-11-03', completed: false },
-  { id: 't-4', category: 'support', title: 'بطء في تصفح بوابة الشركة في موقع 2', projectOrSite: 'موقع 2', priority: 'medium', assignedTo: 'دعم الشبكات', dueDate: '2026-11-02', completed: false },
-  { id: 't-5', category: 'support', title: 'طلب طابعة شبكية جديدة لمكتب الموقع', projectOrSite: 'موقع 1', priority: 'low', assignedTo: 'الدعم الميداني', dueDate: '2026-11-05', completed: false },
-  { id: 't-6', category: 'maintenance', title: 'صيانة وقائية دورية لوحدات UPS', projectOrSite: 'المقر الرئيسي', priority: 'medium', assignedTo: 'فريق الكهروميكانيك', dueDate: '2026-11-06', completed: false },
-  { id: 't-7', category: 'maintenance', title: 'فحص أنظمة مكافحة الحريق بالغاز FM200', projectOrSite: 'مركز بيانات', priority: 'high', assignedTo: 'إدارة السلامة', dueDate: '2026-11-07', completed: false },
-  { id: 't-8', category: 'update', title: 'تحديث حزم الأمان الشهرية لنظام Windows Server', projectOrSite: 'Active Directory', priority: 'high', assignedTo: 'مهندس النظم', dueDate: '2026-11-04', completed: false },
-  { id: 't-9', category: 'update', title: 'ترقية شهادات الأمان SSL للبوابة الداخلية', projectOrSite: 'EEC Portal', priority: 'medium', assignedTo: 'أمن المعلومات', dueDate: '2026-11-05', completed: false },
+  { id: 't-1', category: 'approval', title: 'موافقة على مستخلص مقاول باطن - خرسانات', projectOrSite: 'مبنى إداري جديد', priority: 'high', assignedTo: 'المدير العام', dueDate: '2026-11-03', completed: false, status: 'in_progress' },
+  { id: 't-2', category: 'approval', title: 'اعتماد عينات رخام الواجهات الرئيسية', projectOrSite: 'تشطيب المقر الرئيسي', priority: 'medium', assignedTo: 'المدير الفني', dueDate: '2026-11-04', completed: false, status: 'in_progress' },
+  { id: 't-3', category: 'approval', title: 'طلب شراء كابلات شبكة Cat6A ومسارات', projectOrSite: 'مركز بيانات', priority: 'high', assignedTo: 'مدير الشبكة', dueDate: '2026-11-01', completed: false, status: 'delayed' },
+  { id: 't-4', category: 'support', title: 'بطء في تصفح بوابة الشركة في موقع 2', projectOrSite: 'موقع 2', priority: 'medium', assignedTo: 'دعم الشبكات', dueDate: '2026-11-02', completed: false, status: 'in_progress' },
+  { id: 't-5', category: 'support', title: 'طلب طابعة شبكية جديدة لمكتب الموقع', projectOrSite: 'موقع 1', priority: 'low', assignedTo: 'الدعم الميداني', dueDate: '2026-10-28', completed: true, status: 'completed' },
+  { id: 't-6', category: 'maintenance', title: 'صيانة وقائية دورية لوحدات UPS', projectOrSite: 'المقر الرئيسي', priority: 'medium', assignedTo: 'فريق الكهروميكانيك', dueDate: '2026-11-06', completed: false, status: 'in_progress' },
+  { id: 't-7', category: 'maintenance', title: 'فحص أنظمة مكافحة الحريق بالغاز FM200', projectOrSite: 'مركز بيانات', priority: 'high', assignedTo: 'إدارة السلامة', dueDate: '2026-10-25', completed: false, status: 'delayed' },
+  { id: 't-8', category: 'update', title: 'تحديث حزم الأمان الشهرية لنظام Windows Server', projectOrSite: 'Active Directory', priority: 'high', assignedTo: 'مهندس النظم', dueDate: '2026-10-30', completed: true, status: 'completed' },
+  { id: 't-9', category: 'update', title: 'ترقية شهادات الأمان SSL للبوابة الداخلية', projectOrSite: 'EEC Portal', priority: 'medium', assignedTo: 'أمن المعلومات', dueDate: '2026-11-05', completed: false, status: 'in_progress' },
+  { id: 't-10', category: 'approval', title: 'مراجعة التراخيص البيئية لمحطة الصرف', projectOrSite: 'موقع 3', priority: 'high', assignedTo: 'المستشار البيئي', dueDate: '2026-10-20', completed: false, status: 'delayed' },
+  { id: 't-11', category: 'maintenance', title: 'اختبار مولدات الطوارئ الديزل الاحتياطية', projectOrSite: 'الموقع الرئيسي', priority: 'low', assignedTo: 'قسم الصيانة', dueDate: '2026-10-29', completed: true, status: 'completed' },
+  { id: 't-12', category: 'support', title: 'تهيئة 10 أجهزة حاسوب للمهندسين الجدد', projectOrSite: 'المقر الرئيسي', priority: 'medium', assignedTo: 'الدعم الفني', dueDate: '2026-10-31', completed: true, status: 'completed' },
 ];
 
 let networkTelemetry = {
@@ -681,6 +685,28 @@ app.post('/api/tasks/:id/toggle', (req: Request, res: Response) => {
   }
 
   task.completed = !task.completed;
+  if (task.completed) {
+    task.status = 'completed';
+  } else {
+    const dueDatePassed = new Date(task.dueDate).getTime() < new Date('2026-11-02').getTime();
+    task.status = dueDatePassed ? 'delayed' : 'in_progress';
+  }
+  res.json(task);
+});
+
+app.put('/api/tasks/:id/status', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const task = tasks.find((t) => t.id === id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'المهمة غير موجودة' });
+  }
+
+  if (['in_progress', 'completed', 'delayed'].includes(status)) {
+    task.status = status;
+    task.completed = status === 'completed';
+  }
   res.json(task);
 });
 
@@ -826,6 +852,93 @@ app.get('/api/financials/budget-trend', (_req: Request, res: Response) => {
   });
 });
 
+// 10. Conflict Detection Helper & Gantt Schedule Endpoints
+function detectScheduleConflicts(projList: Project[]) {
+  const conflicts: any[] = [];
+  const activeProjects = projList.filter(
+    (p) => p.status === 'in_progress' || p.status === 'delayed' || p.status === 'at_risk'
+  );
+
+  // 1. Direct Handover Conflict: Multiple projects ending within 20 days of each other
+  for (let i = 0; i < activeProjects.length; i++) {
+    for (let j = i + 1; j < activeProjects.length; j++) {
+      const p1 = activeProjects[i];
+      const p2 = activeProjects[j];
+      const d1 = new Date(p1.endDate).getTime();
+      const d2 = new Date(p2.endDate).getTime();
+      const diffDays = Math.abs(d1 - d2) / (1000 * 60 * 60 * 24);
+
+      if (diffDays <= 20) {
+        conflicts.push({
+          id: `conf-${p1.id}-${p2.id}`,
+          type: 'direct_handover_overlap',
+          severity: diffDays <= 15 ? 'high' : 'medium',
+          projectIds: [p1.id, p2.id],
+          projectNames: [p1.name, p2.name],
+          title: `تعارض تسليم متزامن: "${p1.name}" و "${p2.name}"`,
+          description: `الفارق الزمني بين موعدي التسليم النهائي للمشروعين هو ${Math.round(diffDays)} يوماً فقط (${p1.endDate} و ${p2.endDate})، مما يسبب ضغطاً حاداً على لجان الاستلام الهندسي والتحقق الفني.`,
+          handoverDates: [p1.endDate, p2.endDate],
+          suggestedAction: `ترحيل موعد تسليم "${p2.name}" بمقدار 30 يوماً إضافية لتفادي التداخل في أعمال الفحص الميداني.`,
+        });
+      }
+    }
+  }
+
+  // 2. Delayed project risk
+  const now = new Date('2026-11-02').getTime();
+  activeProjects.forEach((p) => {
+    if (p.status === 'delayed' || p.status === 'at_risk') {
+      const end = new Date(p.endDate).getTime();
+      const daysLeft = (end - now) / (1000 * 60 * 60 * 24);
+      if (daysLeft < 120 && p.executionRate < 45) {
+        conflicts.push({
+          id: `conf-risk-${p.id}`,
+          type: 'delayed_risk',
+          severity: 'high',
+          projectIds: [p.id],
+          projectNames: [p.name],
+          title: `خطر تأخر التسليم: "${p.name}"`,
+          description: `المشروع مصنف بحالة حرجة (${p.status === 'at_risk' ? 'معرض للمخاطر' : 'مؤجل'}) بنسبة إنجاز ${p.executionRate}% فقط مع اقتراب موعد التسليم في ${p.endDate}.`,
+          handoverDates: [p.endDate],
+          suggestedAction: `تعديل البرنامج الزمني وتمديد مهلة التسليم إلى منتصف 2027 مع تعزيز المقاولين.`,
+        });
+      }
+    }
+  });
+
+  return conflicts;
+}
+
+app.get('/api/schedule/gantt', (_req: Request, res: Response) => {
+  const conflicts = detectScheduleConflicts(projects);
+  res.json({
+    projects,
+    conflicts,
+    timelineStart: '2025-01-01',
+    timelineEnd: '2027-12-31',
+    currentDate: '2026-11-02',
+  });
+});
+
+app.put('/api/projects/:id/schedule', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { startDate, endDate } = req.body;
+  const project = projects.find((p) => p.id === id);
+
+  if (!project) {
+    return res.status(404).json({ error: 'المشروع غير موجود' });
+  }
+
+  if (startDate) project.startDate = startDate;
+  if (endDate) project.endDate = endDate;
+
+  const conflicts = detectScheduleConflicts(projects);
+  res.json({
+    project,
+    conflicts,
+    message: 'تم تحديث التواريخ الزمنية للمشروع بنجاح',
+  });
+});
 
 // ----------------- Vite Setup in Dev / Static in Prod -----------------
 async function startServer() {

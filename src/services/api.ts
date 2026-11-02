@@ -124,6 +124,18 @@ export async function toggleTaskCompletion(id: string): Promise<TaskItem> {
   return res.json();
 }
 
+export async function updateTaskStatus(id: string, status: 'in_progress' | 'completed' | 'delayed'): Promise<TaskItem> {
+  const res = await fetch(`/api/tasks/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update task status');
+  }
+  return res.json();
+}
+
 export async function refreshTelemetry(): Promise<DashboardData['networkTelemetry']> {
   const res = await fetch('/api/telemetry/refresh', {
     method: 'POST',
@@ -149,5 +161,30 @@ export async function fetchBudgetTrends(): Promise<import('../types/dashboard').
   }
   return res.json();
 }
+
+export async function fetchGanttSchedule(): Promise<import('../types/dashboard').GanttScheduleData> {
+  const res = await fetch('/api/schedule/gantt');
+  if (!res.ok) {
+    throw new Error('Failed to fetch Gantt schedule');
+  }
+  return res.json();
+}
+
+export async function updateProjectSchedule(
+  id: string,
+  startDate?: string,
+  endDate?: string
+): Promise<{ project: import('../types/dashboard').Project; conflicts: import('../types/dashboard').ScheduleConflict[] }> {
+  const res = await fetch(`/api/projects/${id}/schedule`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startDate, endDate }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update project schedule');
+  }
+  return res.json();
+}
+
 
 
