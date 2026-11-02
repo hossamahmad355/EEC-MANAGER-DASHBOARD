@@ -22,7 +22,7 @@ interface NotificationSettingsModalProps {
   onClose: () => void;
   permission: NotificationPermissionState;
   onPermissionChange: (newPermission: NotificationPermissionState) => void;
-  onTriggerSimulatedAlert: (type: 'site_down' | 'high_task') => void;
+  onTriggerSimulatedAlert: (type: 'site_down' | 'high_task' | 'budget_overrun') => void;
 }
 
 export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps> = ({
@@ -35,6 +35,7 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
   const [notifyInfra, setNotifyInfra] = useState(true);
   const [notifyTasks, setNotifyTasks] = useState(true);
   const [notifyBandwidth, setNotifyBandwidth] = useState(true);
+  const [notifyBudget, setNotifyBudget] = useState(true);
   const [testSuccess, setTestSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -186,6 +187,19 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
                   className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 accent-blue-600"
                 />
               </label>
+
+              <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 cursor-pointer">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                  <span className="text-slate-800">تنبيهات تجاوز الميزانية للمشاريع (&gt; 90%)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={notifyBudget}
+                  onChange={(e) => setNotifyBudget(e.target.checked)}
+                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 accent-rose-600"
+                />
+              </label>
             </div>
           </div>
 
@@ -196,20 +210,27 @@ export const NotificationSettingsModal: React.FC<NotificationSettingsModalProps>
               <span>محاكاة الحالات الطارئة الميدانية:</span>
             </h4>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 onClick={() => onTriggerSimulatedAlert('site_down')}
                 className="p-2.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 text-xs font-bold text-right transition-colors"
               >
                 <AlertTriangle className="w-3.5 h-3.5 inline ml-1 text-red-600" />
-                محاكاة انقطاع في موقع 7
+                محاكاة انقطاع موقع 7
               </button>
               <button
                 onClick={() => onTriggerSimulatedAlert('high_task')}
                 className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold text-right transition-colors"
               >
                 <Radio className="w-3.5 h-3.5 inline ml-1 text-amber-600" />
-                محاكاة مهمة عاجلة جديدة
+                محاكاة مهمة عاجلة
+              </button>
+              <button
+                onClick={() => onTriggerSimulatedAlert('budget_overrun')}
+                className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 text-xs font-bold text-right transition-colors"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 inline ml-1 text-rose-600" />
+                تجاوز ميزانية مشروع (&gt;90%)
               </button>
             </div>
           </div>

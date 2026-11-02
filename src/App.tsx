@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AlertsModal } from './components/AlertsModal';
 import { BottomRow } from './components/BottomRow';
 import { BudgetTrendChart } from './components/BudgetTrendChart';
+import { DocumentsModal } from './components/DocumentsModal';
 import { GanttScheduleModal } from './components/GanttScheduleModal';
 import { Header } from './components/Header';
 import { KpiBar } from './components/KpiBar';
@@ -20,10 +21,12 @@ import {
 } from './services/notifications';
 import {
   createProject,
+  deleteDocument,
   deleteProject,
   fetchAlerts,
   fetchBudgetTrends,
   fetchDashboardData,
+  fetchDocuments,
   fetchGanttSchedule,
   fetchPerformanceReport,
   fetchProjects,
@@ -35,8 +38,10 @@ import {
   toggleServiceStatus,
   toggleTaskCompletion,
   updateProject,
+  updateProjectExpenses,
   updateProjectSchedule,
   updateTaskStatus,
+  uploadDocument,
 } from './services/api';
 import {
   Alert,
@@ -45,6 +50,7 @@ import {
   GanttScheduleData,
   PerformanceReport,
   Project,
+  ProjectDocument,
   Site,
   SystemService,
   TaskItem,
@@ -159,11 +165,51 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isGanttOpen, setIsGanttOpen] = useState(false);
   const [ganttData, setGanttData] = useState<GanttScheduleData | null>(null);
+  const [isDocumentsModalOpen, setIsDocumentsModalOpen] = useState(false);
+  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
+  const [selectedDocProjectId, setSelectedDocProjectId] = useState<string>('all');
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionState>(
     notificationService.getPermission()
   );
   const [reportData, setReportData] = useState<PerformanceReport | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('eec_dark_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('eec_dark_mode', String(next));
+      } catch {}
+      return next;
+    });
+    showToast(isDarkMode ? 'تم الانتقال إلى الوضع العادي (الفاتح)' : 'تم تفعيل الوضع الداكن بنجاح 🌙');
+  };
+
+  const [lang, setLang] = useState<'ar' | 'en'>(() => {
+    try {
+      return (localStorage.getItem('eec_lang') as 'ar' | 'en') || 'ar';
+    } catch {
+      return 'ar';
+    }
+  });
+
+  const toggleLanguage = () => {
+    setLang((prev) => {
+      const next = prev === 'ar' ? 'en' : 'ar';
+      try {
+        localStorage.setItem('eec_lang', next);
+      } catch {}
+      return next;
+    });
+    showToast(lang === 'ar' ? 'Switched to English language 🌐' : 'تم التحويل إلى اللغة العربية 🌐');
+  };
 
   // Show Toast
   const showToast = (msg: string) => {
@@ -176,13 +222,14 @@ export default function App() {
   // Load Initial Data
   const loadData = async () => {
     try {
-      const [dash, projs, sitesList, tasksList, trends, gantt] = await Promise.all([
+      const [dash, projs, sitesList, tasksList, trends, gantt, docs] = await Promise.all([
         fetchDashboardData(),
         fetchProjects(),
         fetchSites(),
         fetchTasks(),
         fetchBudgetTrends().catch(() => initialBudgetTrends),
         fetchGanttSchedule().catch(() => null),
+        fetchDocuments().catch(() => []),
       ]);
       setData(dash);
       setAllProjects(projs);
@@ -190,6 +237,19 @@ export default function App() {
       setAllTasks(tasksList);
       if (trends) setBudgetTrends(trends);
       if (gantt) setGanttData(gantt);
+      if (docs) setDocuments(docs);
+
+      // Automated check: if any project exceeds 90% of budget, dispatch notification
+      const overBudgetProjs = projs.filter((p) => {
+        const exp = p.actualExpensesEGP !== undefined ? p.actualExpensesEGP : p.budgetEGP * (p.executionRate / 100);
+        return (exp / p.budgetEGP) >= 0.90;
+      });
+      if (overBudgetProjs.length > 0) {
+        const p = overBudgetProjs[0];
+        const spent = p.actualExpensesEGP || Math.round(p.budgetEGP * 0.93);
+        const rate = Number(((spent / p.budgetEGP) * 100).toFixed(1));
+        notificationService.notifyBudgetExceeded(p.name, rate, spent, p.budgetEGP);
+      }
     } catch (err) {
       console.warn('Backend loading warning, using client fallback:', err);
     } finally {
@@ -338,7 +398,7 @@ export default function App() {
     }
   };
 
-  const handleTriggerSimulatedAlert = (type: 'site_down' | 'high_task') => {
+  const handleTriggerSimulatedAlert = (type: 'site_down' | 'high_task' | 'budget_overrun') => {
     if (type === 'site_down') {
       notificationService.notifyInfrastructureChange(
         'موقع 7 - برج العرب',
@@ -346,13 +406,49 @@ export default function App() {
         '🚨 إنذار حرج: انقطاع مفاجئ في الخط الرئيسي لشبكة الألياف الضوئية بموقع 7!'
       );
       showToast('تم إرسال إشعار سطح المكتب: انقطاع شبكي حرج في موقع 7');
-    } else {
+    } else if (type === 'high_task') {
       notificationService.notifyHighPriorityTask(
         'اعتماد أمر تشغيل خرسانات عاجل لمشروع مبنى إداري جديد',
         'المدير العام',
         'العاصمة الإدارية'
       );
       showToast('تم إرسال إشعار سطح المكتب: مهمة عاجلة جديدة');
+    } else if (type === 'budget_overrun') {
+      notificationService.notifyBudgetExceeded(
+        'تشطيب المقر الرئيسي',
+        93.0,
+        172000000,
+        185000000
+      );
+      showToast('تم إرسال إشعار سطح المكتب: تنبيه آلي بتجاوز 90% من ميزانية المشروع');
+    }
+  };
+
+  const handleUpdateProjectExpenses = async (id: string, expensesEGP: number) => {
+    try {
+      const res = await updateProjectExpenses(id, expensesEGP);
+      setAllProjects((prev) => prev.map((p) => (p.id === id ? res.project : p)));
+      setData((prev) => ({
+        ...prev,
+        topProjects: prev.topProjects.map((p) => (p.id === id ? res.project : p)),
+        alerts: res.alert
+          ? [res.alert, ...prev.alerts.filter((a) => a.id !== res.alert!.id)]
+          : prev.alerts,
+      }));
+
+      if (res.alertTriggered) {
+        notificationService.notifyBudgetExceeded(
+          res.project.name,
+          res.project.budgetBurnRatePct || 90,
+          expensesEGP,
+          res.project.budgetEGP
+        );
+        showToast(`🚨 تنبيه آلي عاجل: تجاوزت مصروفات مشروع "${res.project.name}" نسبة 90%!`);
+      } else {
+        showToast(res.message);
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'تعذر تحديث المصروفات الفعلية للمشروع');
     }
   };
 
@@ -380,6 +476,26 @@ export default function App() {
       );
     } catch (err: any) {
       showToast(err?.message || 'تعذر تعديل المهمة');
+    }
+  };
+
+  const handleUploadDocument = async (docData: Partial<ProjectDocument>) => {
+    try {
+      const created = await uploadDocument(docData);
+      setDocuments((prev) => [created, ...prev]);
+      showToast(`تم رفع وحفظ المستند "${created.title}" بنجاح في الأرشيف`);
+    } catch (err: any) {
+      showToast(err?.message || 'تعذر رفع المستند');
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    try {
+      await deleteDocument(id);
+      setDocuments((prev) => prev.filter((d) => d.id !== id));
+      showToast('تم حذف المستند من الأرشيف الرقمي بنجاح');
+    } catch (err: any) {
+      showToast(err?.message || 'تعذر حذف المستند');
     }
   };
 
@@ -451,7 +567,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-800 p-3 md:p-6 select-none font-['Cairo',sans-serif]">
+    <div
+      dir={lang}
+      className={`min-h-screen p-3 md:p-6 select-none font-['Cairo',sans-serif] transition-colors duration-300 ${
+        isDarkMode ? 'bg-slate-950 text-slate-100 dark' : 'bg-slate-100/90 text-slate-800'
+      }`}
+    >
       {/* Container matching 1440px max width for dashboard layout integrity */}
       <div className="max-w-[1520px] mx-auto">
         {/* Toast Notification */}
@@ -471,9 +592,18 @@ export default function App() {
           onOpenReport={handleOpenReport}
           onOpenGantt={() => setIsGanttOpen(true)}
           conflictsCount={ganttData?.conflicts?.length || 0}
+          onOpenDocuments={() => {
+            setSelectedDocProjectId('all');
+            setIsDocumentsModalOpen(true);
+          }}
+          documentsCount={documents.length}
           onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
           notificationPermission={notificationPermission}
           isRefreshing={isRefreshing}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+          currentLang={lang}
+          onToggleLanguage={toggleLanguage}
         />
 
         {/* 2. Horizontal KPI Strip (7 Cards) */}
@@ -535,6 +665,11 @@ export default function App() {
         onOpenNewProject={() => setIsNewProjectOpen(true)}
         onDeleteProject={handleDeleteProject}
         onUpdateProjectProgress={handleUpdateProjectProgress}
+        onUpdateProjectExpenses={handleUpdateProjectExpenses}
+        onOpenProjectDocuments={(projectId) => {
+          setSelectedDocProjectId(projectId);
+          setIsDocumentsModalOpen(true);
+        }}
       />
 
       {/* View All Sites Modal */}
@@ -605,6 +740,18 @@ export default function App() {
         scheduleData={ganttData}
         onUpdateSchedule={handleUpdateSchedule}
         onRefresh={loadData}
+      />
+
+      {/* Digital Document Management System (DMS) Modal */}
+      <DocumentsModal
+        isOpen={isDocumentsModalOpen}
+        onClose={() => setIsDocumentsModalOpen(false)}
+        projects={allProjects.length > 0 ? allProjects : data.topProjects}
+        documents={documents}
+        onUploadDocument={handleUploadDocument}
+        onDeleteDocument={handleDeleteDocument}
+        onRefresh={loadData}
+        initialSelectedProjectId={selectedDocProjectId}
       />
     </div>
   );

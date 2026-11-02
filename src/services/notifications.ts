@@ -110,6 +110,23 @@ class DesktopNotificationService {
       tag: `alert-${Date.now()}`,
     });
   }
+
+  public notifyBudgetExceeded(
+    projectName: string,
+    consumedPct: number,
+    actualExpensesEGP: number,
+    budgetEGP: number
+  ) {
+    const spentMillion = (actualExpensesEGP / 1000000).toFixed(1);
+    const budgetMillion = (budgetEGP / 1000000).toFixed(1);
+    const title = `🚨 تنبيه مالي: تجاوز 90% من ميزانية مشروع "${projectName}"`;
+    const body = `بلغت المصروفات الفعلية ${spentMillion} مليون ج.م من أصل ميزانية معتمدة ${budgetMillion} مليون ج.م (${consumedPct.toFixed(1)}%). يرجى التدقيق الهندسي والمالي الفوري.`;
+
+    this.sendNotification(title, {
+      body,
+      tag: `budget-overrun-${projectName}`,
+    });
+  }
 }
 
 export const notificationService = new DesktopNotificationService();

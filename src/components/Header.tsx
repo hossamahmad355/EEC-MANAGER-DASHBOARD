@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Bell, BellRing, Calendar, FileText, LayoutGrid, RefreshCw, Search, ShieldCheck, User } from 'lucide-react';
+import { AlertTriangle, Bell, BellRing, Calendar, FileText, Files, LayoutGrid, Moon, RefreshCw, Search, ShieldCheck, Sun, User } from 'lucide-react';
 import { Alert } from '../types/dashboard';
 import { NotificationPermissionState } from '../services/notifications';
+import { translations } from '../services/translations';
 
 interface HeaderProps {
   alerts: Alert[];
@@ -11,9 +12,15 @@ interface HeaderProps {
   onOpenReport: () => void;
   onOpenGantt: () => void;
   conflictsCount: number;
+  onOpenDocuments?: () => void;
+  documentsCount?: number;
   onOpenNotificationSettings: () => void;
   notificationPermission: NotificationPermissionState;
   isRefreshing: boolean;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  currentLang?: 'ar' | 'en';
+  onToggleLanguage?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -24,10 +31,17 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenReport,
   onOpenGantt,
   conflictsCount,
+  onOpenDocuments,
+  documentsCount,
   onOpenNotificationSettings,
   notificationPermission,
   isRefreshing,
+  isDarkMode,
+  onToggleDarkMode,
+  currentLang = 'ar',
+  onToggleLanguage,
 }) => {
+  const t = translations[currentLang] || translations.ar;
   const unreadAlertsCount = alerts.filter((a) => !a.resolved).length;
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
@@ -218,7 +232,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>تحميل التقرير (PDF)</span>
+              <span>{t.downloadPdf}</span>
             </button>
 
             {/* Gantt Schedule Button with Conflict Alert Badge */}
@@ -228,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer border border-slate-700"
             >
               <Calendar className="w-3.5 h-3.5 text-sky-400" />
-              <span>مخطط جانت الزمني</span>
+              <span>{t.ganttSchedule}</span>
               {conflictsCount > 0 && (
                 <span className="bg-red-500 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full animate-pulse flex items-center gap-0.5">
                   <AlertTriangle className="w-2.5 h-2.5 inline" />
@@ -236,16 +250,60 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* Digital Documents Management (DMS) Button */}
+            {onOpenDocuments && (
+              <button
+                onClick={onOpenDocuments}
+                title="نظام إدارة المستندات الرقمية (عقود، مخططات هندسية، شهادات ضمان)"
+                className="flex items-center gap-1.5 bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all hover:shadow-md cursor-pointer border border-indigo-600"
+              >
+                <Files className="w-3.5 h-3.5 text-indigo-200" />
+                <span>{t.digitalDocs}</span>
+                {documentsCount !== undefined && documentsCount > 0 && (
+                  <span className="bg-indigo-900/80 text-indigo-200 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">
+                    {documentsCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Dark Mode Toggle Switch Button */}
+            {onToggleDarkMode && (
+              <button
+                onClick={onToggleDarkMode}
+                title={isDarkMode ? 'التحول إلى الوضع الفاتح' : 'التحول إلى الوضع الداكن لتقليل إجهاد العين'}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer border ${
+                  isDarkMode
+                    ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-400'
+                    : 'bg-slate-900 hover:bg-slate-800 text-amber-300 border-slate-700'
+                }`}
+              >
+                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                <span>{isDarkMode ? t.lightMode : t.darkMode}</span>
+              </button>
+            )}
+
+            {/* Language Switch Button (AR / EN) */}
+            {onToggleLanguage && (
+              <button
+                onClick={onToggleLanguage}
+                title="Switch Language / تغيير اللغة"
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm transition-all cursor-pointer bg-sky-700 hover:bg-sky-800 text-white border border-sky-600"
+              >
+                <span>🌐 {currentLang === 'ar' ? 'English (EN)' : 'العربية (AR)'}</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Center: Main Dashboard Title and Welcome text */}
         <div className="text-center order-1 md:order-2 flex-1">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-2">
-            <span>مرحباً بك</span>
+            <span>{t.welcome}</span>
           </h1>
           <p className="text-xs md:text-sm lg:text-base font-semibold text-slate-700 mt-1">
-            لوحة التحكم الشاملة - إدارة الشركة والمواقع والبنية التحتية
+            {t.subtitle}
           </p>
         </div>
 

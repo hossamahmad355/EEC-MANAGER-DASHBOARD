@@ -53,6 +53,27 @@ export async function deleteProject(id: string): Promise<void> {
   }
 }
 
+export async function updateProjectExpenses(
+  id: string,
+  actualExpensesEGP: number
+): Promise<{
+  project: Project;
+  alertTriggered: boolean;
+  alert: Alert | null;
+  message: string;
+}> {
+  const res = await fetch(`/api/projects/${id}/expenses`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ actualExpensesEGP }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to update project expenses');
+  }
+  return res.json();
+}
+
 export async function fetchSites(): Promise<Site[]> {
   const res = await fetch('/api/sites');
   if (!res.ok) {
@@ -184,6 +205,50 @@ export async function updateProjectSchedule(
     throw new Error('Failed to update project schedule');
   }
   return res.json();
+}
+
+export async function fetchDocuments(filters?: {
+  projectId?: string;
+  category?: string;
+  kind?: string;
+  query?: string;
+}): Promise<import('../types/dashboard').ProjectDocument[]> {
+  const params = new URLSearchParams();
+  if (filters?.projectId && filters.projectId !== 'all') params.append('projectId', filters.projectId);
+  if (filters?.category && filters.category !== 'all') params.append('category', filters.category);
+  if (filters?.kind && filters.kind !== 'all') params.append('kind', filters.kind);
+  if (filters?.query) params.append('query', filters.query);
+
+  const url = `/api/documents${params.toString() ? `?${params.toString()}` : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to fetch documents');
+  }
+  return res.json();
+}
+
+export async function uploadDocument(
+  docData: Partial<import('../types/dashboard').ProjectDocument>
+): Promise<import('../types/dashboard').ProjectDocument> {
+  const res = await fetch('/api/documents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(docData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to upload document');
+  }
+  return res.json();
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  const res = await fetch(`/api/documents/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete document');
+  }
 }
 
 

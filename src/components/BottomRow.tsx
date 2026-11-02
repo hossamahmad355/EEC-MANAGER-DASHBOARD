@@ -299,7 +299,14 @@ export const BottomRow: React.FC<BottomRowProps> = ({
                   >
                     {/* المشروع */}
                     <td className="py-2.5 font-bold text-slate-800 whitespace-nowrap">
-                      {proj.name}
+                      <div className="flex items-center gap-1.5">
+                        <span>{proj.name}</span>
+                        {proj.budgetBurnRatePct !== undefined && proj.budgetBurnRatePct >= 90 && (
+                          <span title={`تنبيه مالي آلي: استهلاك ${proj.budgetBurnRatePct}% من الميزانية المحددة`}>
+                            <AlertTriangle className="w-3.5 h-3.5 text-red-500 inline shrink-0 animate-pulse" />
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* نسبة التنفيذ */}

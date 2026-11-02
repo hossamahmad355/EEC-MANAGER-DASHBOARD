@@ -7,6 +7,8 @@ export interface Project {
   finalHandoverRate: number;
   status: 'completed' | 'in_progress' | 'delayed' | 'at_risk';
   budgetEGP: number;
+  actualExpensesEGP?: number;
+  budgetBurnRatePct?: number;
   manager: string;
   location: string;
   startDate: string;
@@ -161,6 +163,28 @@ export interface GanttScheduleData {
   timelineStart: string;
   timelineEnd: string;
   currentDate: string;
+}
+
+export type DocumentCategory = 'technical' | 'financial' | 'administrative';
+export type DocumentKind = 'contract' | 'blueprint' | 'warranty' | 'permit' | 'other';
+
+export interface ProjectDocument {
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  fileName: string;
+  fileExtension: 'pdf' | 'dwg' | 'xlsx' | 'docx' | 'zip';
+  fileSizeBytes: number;
+  fileSizeFormatted: string;
+  category: DocumentCategory; // 'technical' (فنية), 'financial' (مالية), 'administrative' (إدارية)
+  kind: DocumentKind; // 'contract' (عقد), 'blueprint' (مخطط هندسي), 'warranty' (شهادة ضمان)
+  uploadedBy: string;
+  uploadedAt: string;
+  uploadedAtArabic: string;
+  version: string;
+  description?: string;
+  status: 'active' | 'archived' | 'pending_review';
 }
 
 
