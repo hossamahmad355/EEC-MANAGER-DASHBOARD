@@ -1,0 +1,6 @@
+{
+  "name": "لوحة التحكم الشاملة - إدارة المقاولات والبنية التحتية",
+  "description": "لوحة تحكم شاملة لإدارة مشاريع المقاولات، المواقع الإنشائية، والبنية التحتية لتكنولوجيا المعلومات والشبكات باللغة العربية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
